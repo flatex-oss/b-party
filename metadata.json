@@ -1,0 +1,6 @@
+{
+  "name": "Вкусняхи — ДР-Меню & Опрос",
+  "description": "Интерактивный опрос гостей для тусовки с выбором еды и бара, расчетом заказа и паспортом агента Valorant",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

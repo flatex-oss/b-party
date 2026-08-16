@@ -1,0 +1,81 @@
+{
+  "entities": {
+    "SurveyResponse": {
+      "title": "SurveyResponse",
+      "description": "Party guest survey response containing food, drinks, allergen preferences and Valorant agent identity",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier of the response"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name or nickname of the party guest",
+          "maxLength": 100
+        },
+        "allergies": {
+          "type": "array",
+          "description": "List of food allergies or dietary restrictions"
+        },
+        "pizza": {
+          "type": "array",
+          "description": "List of preferred pizza types"
+        },
+        "sushi": {
+          "type": "array",
+          "description": "List of preferred sushi and roll types"
+        },
+        "snacks": {
+          "type": "array",
+          "description": "List of preferred snacks and appetizers"
+        },
+        "spice": {
+          "type": "number",
+          "description": "Preferred spice level from 1 to 5"
+        },
+        "avoid": {
+          "type": "array",
+          "description": "List of ingredients in the stop-list"
+        },
+        "alcoholPref": {
+          "type": "string",
+          "description": "General alcohol drinking preference"
+        },
+        "alcoholTypes": {
+          "type": "array",
+          "description": "List of preferred alcoholic beverages"
+        },
+        "softDrinks": {
+          "type": "array",
+          "description": "List of preferred non-alcoholic drinks"
+        },
+        "desserts": {
+          "type": "array",
+          "description": "List of preferred desserts"
+        },
+        "wishes": {
+          "type": "string",
+          "description": "Optional message or wish for the birthday host",
+          "maxLength": 500
+        },
+        "agentId": {
+          "type": "string",
+          "description": "Assigned Valorant agent persona identifier",
+          "maxLength": 50
+        },
+        "submittedAt": {
+          "type": "string",
+          "description": "ISO timestamp of when the survey was submitted"
+        }
+      },
+      "required": ["name", "allergies", "pizza", "sushi", "spice", "submittedAt"]
+    }
+  },
+  "firestore": {
+    "/responses/{responseId}": {
+      "schema": "SurveyResponse",
+      "description": "All survey responses submitted by party guests"
+    }
+  }
+}

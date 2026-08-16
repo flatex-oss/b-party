@@ -1,0 +1,53 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+    
+    function incoming() {
+      return request.resource.data;
+    }
+    
+    function existing() {
+      return resource.data;
+    }
+    
+    function isValidSurveyResponse(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.allergies is list && data.allergies.size() <= 20 &&
+             data.pizza is list && data.pizza.size() <= 20 &&
+             data.sushi is list && data.sushi.size() <= 20 &&
+             data.snacks is list && data.snacks.size() <= 20 &&
+             data.spice is number && data.spice >= 1 && data.spice <= 5 &&
+             data.avoid is list && data.avoid.size() <= 20 &&
+             data.alcoholPref is string && data.alcoholPref.size() <= 50 &&
+             data.alcoholTypes is list && data.alcoholTypes.size() <= 20 &&
+             data.softDrinks is list && data.softDrinks.size() <= 20 &&
+             data.desserts is list && data.desserts.size() <= 20 &&
+             (!('wishes' in data) || (data.wishes is string && data.wishes.size() <= 500)) &&
+             (!('agentId' in data) || (data.agentId is string && data.agentId.size() <= 50)) &&
+             data.submittedAt is string && data.submittedAt.size() <= 64;
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Connection test document
+    match /test/connection {
+      allow read: if true;
+    }
+
+    // Responses collection for party guests
+    match /responses/{responseId} {
+      allow read: if true;
+      allow create: if isValidId(responseId) && isValidSurveyResponse(incoming());
+      allow update: if isValidId(responseId) && isValidSurveyResponse(incoming());
+      allow delete: if isValidId(responseId);
+    }
+  }
+}
