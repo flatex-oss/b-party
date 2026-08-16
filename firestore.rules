@@ -17,6 +17,8 @@ service cloud.firestore {
     
     function isValidSurveyResponse(data) {
       return data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             (!('foodFormat' in data) || (data.foodFormat is string && data.foodFormat.size() <= 50)) &&
+             (!('restaurantDishes' in data) || (data.restaurantDishes is list && data.restaurantDishes.size() <= 20)) &&
              data.allergies is list && data.allergies.size() <= 20 &&
              data.pizza is list && data.pizza.size() <= 20 &&
              data.sushi is list && data.sushi.size() <= 20 &&

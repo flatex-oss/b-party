@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import {
   SurveyResponse,
   ActiveTab,
+  FoodFormatType,
+  RestaurantDishType,
   AllergyType,
   PizzaType,
   SushiType,
@@ -24,6 +26,9 @@ import {
   Pizza,
   Wine,
   User,
+  UtensilsCrossed,
+  ChefHat,
+  Truck,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Button } from './ui/button';
@@ -37,12 +42,19 @@ import confetti from 'canvas-confetti';
 interface SurveyViewProps {
   onComplete: (response: SurveyResponse) => void;
   setActiveTab: (tab: ActiveTab) => void;
+  defaultName?: string;
 }
 
-export const SurveyView: React.FC<SurveyViewProps> = ({ onComplete }) => {
+export const SurveyView: React.FC<SurveyViewProps> = ({ onComplete, defaultName }) => {
   const [step, setStep] = useState<number>(1);
-  const [name, setName] = useState<string>('');
+  const [name, setName] = useState<string>(defaultName || '');
   const [nameError, setNameError] = useState<boolean>(false);
+  const [foodFormat, setFoodFormat] = useState<FoodFormatType>('both');
+  const [restaurantDishes, setRestaurantDishes] = useState<RestaurantDishType[]>([
+    'steak-meat',
+    'pasta-risotto',
+    'bruschetta-tapas',
+  ]);
   const [allergies, setAllergies] = useState<AllergyType[]>(['none']);
   const [pizza, setPizza] = useState<PizzaType[]>(['pepperoni', '4cheese']);
   const [sushi, setSushi] = useState<SushiType[]>(['philadelphia']);
@@ -110,9 +122,11 @@ export const SurveyView: React.FC<SurveyViewProps> = ({ onComplete }) => {
 
     const tempResponse: Partial<SurveyResponse> = {
       name: name.trim(),
+      foodFormat,
+      restaurantDishes: foodFormat !== 'delivery' ? restaurantDishes : [],
       allergies,
-      pizza,
-      sushi,
+      pizza: foodFormat !== 'restaurant' ? pizza : ['no-pizza'],
+      sushi: foodFormat !== 'restaurant' ? sushi : ['no-sushi'],
       snacks,
       spice,
       avoid,
@@ -128,9 +142,11 @@ export const SurveyView: React.FC<SurveyViewProps> = ({ onComplete }) => {
     const fullResponse: SurveyResponse = {
       id: 'res-' + Date.now() + '-' + Math.random().toString(36).substring(2, 8),
       name: name.trim(),
+      foodFormat,
+      restaurantDishes: foodFormat !== 'delivery' ? restaurantDishes : [],
       allergies,
-      pizza,
-      sushi,
+      pizza: foodFormat !== 'restaurant' ? pizza : ['no-pizza'],
+      sushi: foodFormat !== 'restaurant' ? sushi : ['no-sushi'],
       snacks,
       spice,
       avoid,
@@ -145,8 +161,8 @@ export const SurveyView: React.FC<SurveyViewProps> = ({ onComplete }) => {
 
     try {
       confetti({
-        particleCount: 80,
-        spread: 70,
+        particleCount: 70,
+        spread: 60,
         origin: { y: 0.6 },
         colors: ['#EA580C', '#F97316', '#10B981', '#6366F1', '#EC4899'],
       });
@@ -155,7 +171,7 @@ export const SurveyView: React.FC<SurveyViewProps> = ({ onComplete }) => {
     setTimeout(() => {
       onComplete(fullResponse);
       setIsSubmitting(false);
-    }, 400);
+    }, 300);
   };
 
   const renderChip = (
@@ -165,11 +181,14 @@ export const SurveyView: React.FC<SurveyViewProps> = ({ onComplete }) => {
     variant: 'default' | 'danger' | 'mint' = 'default',
     key?: React.Key
   ) => {
-    let activeStyles = 'bg-orange-50 text-orange-950 border-orange-500 ring-1 ring-orange-500/30 font-semibold';
+    let activeStyles =
+      'bg-orange-50/90 text-orange-950 border-orange-500 ring-2 ring-orange-500/20 font-bold shadow-xs';
     if (variant === 'danger') {
-      activeStyles = 'bg-rose-50 text-rose-950 border-rose-500 ring-1 ring-rose-500/30 font-semibold';
+      activeStyles =
+        'bg-rose-50/90 text-rose-950 border-rose-500 ring-2 ring-rose-500/20 font-bold shadow-xs';
     } else if (variant === 'mint') {
-      activeStyles = 'bg-emerald-50 text-emerald-950 border-emerald-500 ring-1 ring-emerald-500/30 font-semibold';
+      activeStyles =
+        'bg-emerald-50/90 text-emerald-950 border-emerald-500 ring-2 ring-emerald-500/20 font-bold shadow-xs';
     }
 
     return (
@@ -177,50 +196,50 @@ export const SurveyView: React.FC<SurveyViewProps> = ({ onComplete }) => {
         key={key}
         type="button"
         onClick={onClick}
-        className={`min-h-[42px] px-3.5 py-2 rounded-xl border text-xs sm:text-sm transition-all duration-150 flex items-center justify-center gap-1.5 cursor-pointer select-none whitespace-nowrap ${
+        className={`min-h-[44px] px-4 py-2.5 rounded-xl border text-xs sm:text-sm leading-snug transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer select-none text-left active:scale-[0.98] ${
           isActive
             ? activeStyles
             : 'bg-slate-50/80 hover:bg-slate-100/90 text-slate-700 border-slate-200/80 font-medium'
         }`}
       >
-        {isActive && <Check size={14} className="shrink-0 stroke-[2.5]" />}
+        {isActive && <Check size={15} className="shrink-0 stroke-[2.5]" />}
         <span>{label}</span>
       </button>
     );
   };
 
   const stepsMeta = [
-    { num: 1, title: 'Гость', icon: <User size={14} /> },
-    { num: 2, title: 'Еда', icon: <Pizza size={14} /> },
+    { num: 1, title: 'Формат', icon: <User size={14} /> },
+    { num: 2, title: 'Блюда', icon: <UtensilsCrossed size={14} /> },
     { num: 3, title: 'Снеки', icon: <Flame size={14} /> },
     { num: 4, title: 'Бар', icon: <Wine size={14} /> },
   ];
 
   return (
-    <div className="w-full flex flex-col gap-5 sm:gap-6 pb-6">
+    <div className="w-full flex flex-col gap-6 sm:gap-8 pb-6">
       {/* Modern Stepper Header */}
-      <div className="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col gap-3">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <Badge variant="default" className="text-xs font-semibold">
+      <div className="bg-white border border-slate-200/80 rounded-2xl p-5 sm:p-6 shadow-xs flex flex-col gap-4">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <Badge variant="default" className="text-xs font-semibold px-2.5 py-1">
               Шаг {step} из 4
             </Badge>
-            <span className="text-xs sm:text-sm font-semibold text-slate-700">
-              {step === 1 && 'Знакомство и аллергии'}
-              {step === 2 && 'Пицца и роллы'}
+            <span className="text-xs sm:text-sm font-bold text-slate-800">
+              {step === 1 && 'Имя и формат меню'}
+              {step === 2 && 'Выбор блюд и рецептов'}
               {step === 3 && 'Закуски и острота'}
               {step === 4 && 'Барная карта и десерты'}
             </span>
           </div>
-          <span className="text-xs font-bold text-slate-400">
+          <span className="text-xs font-extrabold text-slate-400">
             {step * 25}%
           </span>
         </div>
 
-        <Progress value={step * 25} className="h-2" />
+        <Progress value={step * 25} className="h-2.5" />
 
         {/* Step Tabs */}
-        <div className="grid grid-cols-4 gap-1.5 pt-1">
+        <div className="grid grid-cols-4 gap-2 pt-1">
           {stepsMeta.map((s) => {
             const isDone = s.num < step;
             const isCurrent = s.num === step;
@@ -233,12 +252,12 @@ export const SurveyView: React.FC<SurveyViewProps> = ({ onComplete }) => {
                     setStep(s.num);
                   }
                 }}
-                className={`py-1.5 px-2 rounded-lg text-xs font-medium flex items-center justify-center gap-1 transition-all ${
+                className={`py-2 px-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
                   isCurrent
-                    ? 'bg-orange-50 border border-orange-200 text-orange-700 font-semibold'
+                    ? 'bg-orange-50 border border-orange-200 text-orange-700 shadow-2xs'
                     : isDone
-                    ? 'bg-slate-50 border border-slate-200 text-slate-600'
-                    : 'text-slate-400 opacity-60'
+                    ? 'bg-slate-50 border border-slate-200/80 text-slate-700'
+                    : 'text-slate-400 opacity-60 hover:opacity-80'
                 }`}
               >
                 <span>{isDone ? '✓' : s.num}</span>
@@ -250,7 +269,7 @@ export const SurveyView: React.FC<SurveyViewProps> = ({ onComplete }) => {
       </div>
 
       <AnimatePresence mode="wait">
-        {/* STEP 1: NAME & ALLERGIES */}
+        {/* STEP 1: NAME, FOOD FORMAT & ALLERGIES */}
         {step === 1 && (
           <motion.div
             key="step-1"
@@ -260,19 +279,19 @@ export const SurveyView: React.FC<SurveyViewProps> = ({ onComplete }) => {
             transition={{ duration: 0.18 }}
             className="w-full"
           >
-            <Card className="p-5 sm:p-7 bg-white border border-slate-200/80 shadow-xs flex flex-col gap-6">
-              <CardHeader className="p-0 pb-4 border-b border-slate-100">
-                <CardTitle className="text-xl sm:text-2xl text-slate-900 flex items-center gap-2">
-                  <span>👋</span> Как тебя зовут?
+            <Card className="p-6 sm:p-8 bg-white border border-slate-200/80 shadow-xs flex flex-col gap-7 sm:gap-8">
+              <CardHeader className="p-0 pb-5 border-b border-slate-100 flex flex-col gap-1.5">
+                <CardTitle className="text-xl sm:text-2xl text-slate-900 flex items-center gap-2.5">
+                  <span>👋</span> Твоё имя и формат стола
                 </CardTitle>
-                <CardDescription className="text-xs sm:text-sm mt-1 text-slate-500">
-                  Укажи имя или никнейм, чтобы мы зарезервировали твои любимые блюда:
+                <CardDescription className="text-xs sm:text-sm text-slate-500 leading-relaxed">
+                  Укажи имя и выбери, какой формат еды для праздника тебе ближе:
                 </CardDescription>
               </CardHeader>
 
-              <CardContent className="p-0 flex flex-col gap-6">
+              <CardContent className="p-0 flex flex-col gap-7 sm:gap-8">
                 {/* Name Input */}
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-2.5">
                   <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
                     Твоё имя или никнейм <span className="text-orange-600">*</span>
                   </label>
@@ -284,29 +303,122 @@ export const SurveyView: React.FC<SurveyViewProps> = ({ onComplete }) => {
                       if (e.target.value.trim()) setNameError(false);
                     }}
                     placeholder="Например: Алина, Влад, MaxPower"
-                    className={nameError ? 'border-red-500 ring-2 ring-red-500/20' : ''}
+                    className={`h-12 text-sm sm:text-base px-4 ${nameError ? 'border-red-500 ring-2 ring-red-500/20' : ''}`}
                     autoFocus
                   />
                   {nameError && (
                     <motion.p
                       initial={{ opacity: 0, y: -4 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="text-xs font-medium text-red-600 flex items-center gap-1 mt-0.5"
+                      className="text-xs font-semibold text-red-600 flex items-center gap-1.5 mt-1"
                     >
-                      <AlertCircle size={14} /> Пожалуйста, укажи имя перед переходом к выбору блюд!
+                      <AlertCircle size={15} /> Пожалуйста, укажи имя перед переходом к выбору блюд!
                     </motion.p>
                   )}
                 </div>
 
+                {/* Food Format Main Selector */}
+                <div className="flex flex-col gap-3.5">
+                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
+                    🍽️ Основной формат меню на вечер:
+                  </label>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                    {/* Restaurant Style */}
+                    <button
+                      type="button"
+                      onClick={() => setFoodFormat('restaurant')}
+                      className={`p-4 rounded-2xl border text-left flex flex-col gap-2 transition-all cursor-pointer select-none ${
+                        foodFormat === 'restaurant'
+                          ? 'bg-orange-50/90 border-orange-500 ring-2 ring-orange-500/20 shadow-xs'
+                          : 'bg-slate-50/80 hover:bg-slate-100/90 border-slate-200/80'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="w-9 h-9 rounded-xl bg-orange-100/80 text-orange-700 flex items-center justify-center font-bold">
+                          <ChefHat size={20} />
+                        </div>
+                        {foodFormat === 'restaurant' && (
+                          <div className="w-5 h-5 rounded-full bg-orange-600 text-white flex items-center justify-center">
+                            <Check size={13} className="stroke-[3]" />
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <div className="text-sm font-bold text-slate-900">Домашний ресторан</div>
+                        <div className="text-xs text-slate-500 leading-relaxed mt-0.5">
+                          Блюда по ресторанным рецептам: сочные стейки, авторская паста, тапас, салаты
+                        </div>
+                      </div>
+                    </button>
+
+                    {/* Delivery Style */}
+                    <button
+                      type="button"
+                      onClick={() => setFoodFormat('delivery')}
+                      className={`p-4 rounded-2xl border text-left flex flex-col gap-2 transition-all cursor-pointer select-none ${
+                        foodFormat === 'delivery'
+                          ? 'bg-orange-50/90 border-orange-500 ring-2 ring-orange-500/20 shadow-xs'
+                          : 'bg-slate-50/80 hover:bg-slate-100/90 border-slate-200/80'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="w-9 h-9 rounded-xl bg-amber-100/80 text-amber-700 flex items-center justify-center font-bold">
+                          <Truck size={20} />
+                        </div>
+                        {foodFormat === 'delivery' && (
+                          <div className="w-5 h-5 rounded-full bg-orange-600 text-white flex items-center justify-center">
+                            <Check size={13} className="stroke-[3]" />
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <div className="text-sm font-bold text-slate-900">Пицца и роллы</div>
+                        <div className="text-xs text-slate-500 leading-relaxed mt-0.5">
+                          Классическая быстрая доставка: горячая пицца, сеты суши и роллов, снеки
+                        </div>
+                      </div>
+                    </button>
+
+                    {/* Both Styles */}
+                    <button
+                      type="button"
+                      onClick={() => setFoodFormat('both')}
+                      className={`p-4 rounded-2xl border text-left flex flex-col gap-2 transition-all cursor-pointer select-none ${
+                        foodFormat === 'both'
+                          ? 'bg-orange-50/90 border-orange-500 ring-2 ring-orange-500/20 shadow-xs'
+                          : 'bg-slate-50/80 hover:bg-slate-100/90 border-slate-200/80'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="w-9 h-9 rounded-xl bg-indigo-100/80 text-indigo-700 flex items-center justify-center font-bold">
+                          <Sparkles size={20} />
+                        </div>
+                        {foodFormat === 'both' && (
+                          <div className="w-5 h-5 rounded-full bg-orange-600 text-white flex items-center justify-center">
+                            <Check size={13} className="stroke-[3]" />
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <div className="text-sm font-bold text-slate-900">И то, и другое</div>
+                        <div className="text-xs text-slate-500 leading-relaxed mt-0.5">
+                          Комбо-формат: и изысканные домашние блюда, и любимая пицца с роллами
+                        </div>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
                 {/* Allergies / Diets */}
-                <div className="flex flex-col gap-3">
-                  <div className="flex items-center gap-1.5">
-                    <ShieldAlert size={16} className="text-rose-600" />
+                <div className="flex flex-col gap-3.5">
+                  <div className="flex items-center gap-2">
+                    <ShieldAlert size={18} className="text-rose-600" />
                     <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
                       Есть аллергии или ограничения?
                     </h3>
                   </div>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2.5 sm:gap-3">
                     {(
                       [
                         'none',
@@ -333,13 +445,13 @@ export const SurveyView: React.FC<SurveyViewProps> = ({ onComplete }) => {
                 </div>
               </CardContent>
 
-              <CardFooter className="p-0 pt-4 border-t border-slate-100">
+              <CardFooter className="p-0 pt-6 border-t border-slate-100">
                 <Button
                   onClick={handleNextStep}
                   size="lg"
-                  className="w-full text-sm sm:text-base font-semibold flex items-center justify-center gap-2 py-3 bg-orange-600 hover:bg-orange-700 shadow-sm"
+                  className="w-full h-12 text-sm sm:text-base font-semibold flex items-center justify-center gap-2.5 bg-orange-600 hover:bg-orange-700 shadow-sm"
                 >
-                  <span>Дальше: Пицца и роллы</span>
+                  <span>Дальше: Выбор блюд</span>
                   <ArrowRight size={18} />
                 </Button>
               </CardFooter>
@@ -347,7 +459,7 @@ export const SurveyView: React.FC<SurveyViewProps> = ({ onComplete }) => {
           </motion.div>
         )}
 
-        {/* STEP 2: PIZZA & SUSHI */}
+        {/* STEP 2: RESTAURANT DISHES / PIZZA & SUSHI */}
         {step === 2 && (
           <motion.div
             key="step-2"
@@ -357,86 +469,130 @@ export const SurveyView: React.FC<SurveyViewProps> = ({ onComplete }) => {
             transition={{ duration: 0.18 }}
             className="w-full"
           >
-            <Card className="p-5 sm:p-7 bg-white border border-slate-200/80 shadow-xs flex flex-col gap-6">
-              <CardHeader className="p-0 pb-4 border-b border-slate-100">
-                <CardTitle className="text-xl sm:text-2xl text-slate-900 flex items-center gap-2">
-                  <span>🍕</span> Пицца, суши и роллы
+            <Card className="p-6 sm:p-8 bg-white border border-slate-200/80 shadow-xs flex flex-col gap-7 sm:gap-8">
+              <CardHeader className="p-0 pb-5 border-b border-slate-100 flex flex-col gap-1.5">
+                <CardTitle className="text-xl sm:text-2xl text-slate-900 flex items-center gap-2.5">
+                  <span>🍽️</span> Выбор блюд для стола
                 </CardTitle>
-                <CardDescription className="text-xs sm:text-sm mt-1 text-slate-500">
-                  Выбирай всё, что с удовольствием съешь на празднике:
+                <CardDescription className="text-xs sm:text-sm text-slate-500 leading-relaxed">
+                  Отметь всё, что с удовольствием попробуешь на празднике:
                 </CardDescription>
               </CardHeader>
 
-              <CardContent className="p-0 flex flex-col gap-6">
-                {/* Pizza */}
-                <div className="flex flex-col gap-3">
-                  <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                    🍕 Любимая пицца:
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {(
-                      [
-                        'pepperoni',
-                        '4cheese',
-                        'meat',
-                        'margarita',
-                        'bbq',
-                        'mushrooms',
-                        'hawaii',
-                        'seafood-p',
-                        'truffle',
-                        'no-pizza',
-                      ] as PizzaType[]
-                    ).map((p) => {
-                      const isActive = pizza.includes(p);
-                      return renderChip(
-                        LABELS.pizza[p],
-                        isActive,
-                        () => toggleMultiSelect(pizza, setPizza, p, 'no-pizza'),
-                        'default',
-                        p
-                      );
-                    })}
+              <CardContent className="p-0 flex flex-col gap-7 sm:gap-8">
+                {/* SECTION 1: RESTAURANT RECIPES (if chosen) */}
+                {(foodFormat === 'restaurant' || foodFormat === 'both') && (
+                  <div className="flex flex-col gap-3.5 bg-orange-50/40 border border-orange-100 rounded-2xl p-5">
+                    <div className="flex items-center gap-2">
+                      <ChefHat size={18} className="text-orange-600" />
+                      <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                        👨‍🍳 Блюда уровня ресторана (домашний шеф):
+                      </h3>
+                    </div>
+                    <div className="flex flex-wrap gap-2.5 sm:gap-3">
+                      {(
+                        [
+                          'steak-meat',
+                          'pasta-risotto',
+                          'bruschetta-tapas',
+                          'gourmet-salads',
+                          'baked-fish',
+                          'truffle-dishes',
+                          'baked-veggies',
+                        ] as RestaurantDishType[]
+                      ).map((dish) => {
+                        const isActive = restaurantDishes.includes(dish);
+                        return renderChip(
+                          LABELS.restaurantDishes[dish],
+                          isActive,
+                          () => {
+                            if (isActive) {
+                              setRestaurantDishes(restaurantDishes.filter((d) => d !== dish));
+                            } else {
+                              setRestaurantDishes([...restaurantDishes, dish]);
+                            }
+                          },
+                          'default',
+                          dish
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
+                )}
 
-                {/* Sushi */}
-                <div className="flex flex-col gap-3">
-                  <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                    🍣 Роллы и сеты:
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {(
-                      [
-                        'philadelphia',
-                        'california',
-                        'baked',
-                        'tempura',
-                        'unagi',
-                        'spicy',
-                        'veggie-sushi',
-                        'no-sushi',
-                      ] as SushiType[]
-                    ).map((s) => {
-                      const isActive = sushi.includes(s);
-                      return renderChip(
-                        LABELS.sushi[s],
-                        isActive,
-                        () => toggleMultiSelect(sushi, setSushi, s, 'no-sushi'),
-                        'default',
-                        s
-                      );
-                    })}
+                {/* SECTION 2: PIZZA (if delivery/both) */}
+                {(foodFormat === 'delivery' || foodFormat === 'both') && (
+                  <div className="flex flex-col gap-3.5">
+                    <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                      🍕 Любимая пицца:
+                    </h3>
+                    <div className="flex flex-wrap gap-2.5 sm:gap-3">
+                      {(
+                        [
+                          'pepperoni',
+                          '4cheese',
+                          'meat',
+                          'margarita',
+                          'bbq',
+                          'mushrooms',
+                          'hawaii',
+                          'seafood-p',
+                          'truffle',
+                          'no-pizza',
+                        ] as PizzaType[]
+                      ).map((p) => {
+                        const isActive = pizza.includes(p);
+                        return renderChip(
+                          LABELS.pizza[p],
+                          isActive,
+                          () => toggleMultiSelect(pizza, setPizza, p, 'no-pizza'),
+                          'default',
+                          p
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
+                )}
+
+                {/* SECTION 3: SUSHI & ROLLS (if delivery/both) */}
+                {(foodFormat === 'delivery' || foodFormat === 'both') && (
+                  <div className="flex flex-col gap-3.5">
+                    <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                      🍣 Сеты роллов и суши:
+                    </h3>
+                    <div className="flex flex-wrap gap-2.5 sm:gap-3">
+                      {(
+                        [
+                          'philadelphia',
+                          'california',
+                          'baked',
+                          'tempura',
+                          'unagi',
+                          'spicy',
+                          'veggie-sushi',
+                          'no-sushi',
+                        ] as SushiType[]
+                      ).map((s) => {
+                        const isActive = sushi.includes(s);
+                        return renderChip(
+                          LABELS.sushi[s],
+                          isActive,
+                          () => toggleMultiSelect(sushi, setSushi, s, 'no-sushi'),
+                          'default',
+                          s
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </CardContent>
 
-              <CardFooter className="p-0 pt-4 border-t border-slate-100 grid grid-cols-2 gap-3">
-                <Button variant="outline" onClick={handlePrevStep} className="w-full text-xs sm:text-sm font-medium flex items-center justify-center gap-1.5 py-2.5">
+              <CardFooter className="p-0 pt-6 border-t border-slate-100 grid grid-cols-2 gap-3.5">
+                <Button variant="outline" onClick={handlePrevStep} className="h-11 sm:h-12 w-full text-xs sm:text-sm font-medium flex items-center justify-center gap-2">
                   <ArrowLeft size={16} />
                   <span>Назад</span>
                 </Button>
-                <Button onClick={handleNextStep} className="w-full text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 py-2.5 bg-orange-600 hover:bg-orange-700">
+                <Button onClick={handleNextStep} className="h-11 sm:h-12 w-full text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 bg-orange-600 hover:bg-orange-700 text-white shadow-sm">
                   <span>Снеки и острота</span>
                   <ArrowRight size={16} />
                 </Button>
@@ -455,23 +611,23 @@ export const SurveyView: React.FC<SurveyViewProps> = ({ onComplete }) => {
             transition={{ duration: 0.18 }}
             className="w-full"
           >
-            <Card className="p-5 sm:p-7 bg-white border border-slate-200/80 shadow-xs flex flex-col gap-6">
-              <CardHeader className="p-0 pb-4 border-b border-slate-100">
-                <CardTitle className="text-xl sm:text-2xl text-slate-900 flex items-center gap-2">
+            <Card className="p-6 sm:p-8 bg-white border border-slate-200/80 shadow-xs flex flex-col gap-7 sm:gap-8">
+              <CardHeader className="p-0 pb-5 border-b border-slate-100 flex flex-col gap-1.5">
+                <CardTitle className="text-xl sm:text-2xl text-slate-900 flex items-center gap-2.5">
                   <span>🍟</span> Закуски, острота и стоп-лист
                 </CardTitle>
-                <CardDescription className="text-xs sm:text-sm mt-1 text-slate-500">
-                  Что поставить поближе к дивану, а чего избегать:
+                <CardDescription className="text-xs sm:text-sm text-slate-500 leading-relaxed">
+                  Что поставить к столу и чего категорически избегать:
                 </CardDescription>
               </CardHeader>
 
-              <CardContent className="p-0 flex flex-col gap-6">
+              <CardContent className="p-0 flex flex-col gap-7 sm:gap-8">
                 {/* Snacks */}
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-3.5">
                   <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                    🍟 Снеки к столу:
+                    🍟 Снеки и закуски:
                   </h3>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2.5 sm:gap-3">
                     {(
                       [
                         'chips-nachos',
@@ -504,14 +660,14 @@ export const SurveyView: React.FC<SurveyViewProps> = ({ onComplete }) => {
                 </div>
 
                 {/* Spice Level Segmented Cards */}
-                <div className="flex flex-col gap-3">
-                  <div className="flex items-center gap-1.5">
-                    <Flame size={16} className="text-orange-600" />
+                <div className="flex flex-col gap-3.5">
+                  <div className="flex items-center gap-2">
+                    <Flame size={18} className="text-orange-600" />
                     <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
                       Уровень остроты:
                     </h3>
                   </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                     {[1, 2, 3, 4, 5].map((lvl) => {
                       const isSelected = spice === lvl;
                       const info = SPICE_LEVELS[lvl];
@@ -520,17 +676,17 @@ export const SurveyView: React.FC<SurveyViewProps> = ({ onComplete }) => {
                           key={lvl}
                           type="button"
                           onClick={() => setSpice(lvl)}
-                          className={`p-2.5 rounded-xl border text-center flex flex-col items-center gap-1 transition-all cursor-pointer select-none ${
+                          className={`p-3 sm:p-4 rounded-xl border text-center flex flex-col items-center justify-between min-h-[96px] gap-1.5 transition-all cursor-pointer select-none ${
                             isSelected
-                              ? 'bg-orange-50 border-orange-500 ring-1 ring-orange-500/30'
+                              ? 'bg-orange-50 border-orange-500 ring-2 ring-orange-500/20 shadow-2xs font-bold'
                               : 'bg-slate-50/70 hover:bg-slate-100/90 border-slate-200/80 text-slate-700'
                           }`}
                         >
-                          <span className="text-lg">{info.emoji}</span>
+                          <span className="text-2xl sm:text-3xl">{info.emoji}</span>
                           <span className="text-xs font-bold text-slate-900 leading-tight">
                             {info.title}
                           </span>
-                          <span className="text-[10px] text-slate-500 leading-tight line-clamp-2">
+                          <span className="text-[10px] text-slate-500 leading-tight">
                             {info.desc}
                           </span>
                         </button>
@@ -540,11 +696,11 @@ export const SurveyView: React.FC<SurveyViewProps> = ({ onComplete }) => {
                 </div>
 
                 {/* Stop List */}
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-3.5">
                   <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                    🚫 Стоп-лист (чего ТОЧНО не должно быть):
+                    🚫 Стоп-лист (чего ТОЧНО не должно быть в твоей порции):
                   </h3>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2.5 sm:gap-3">
                     {(
                       [
                         'none',
@@ -571,13 +727,13 @@ export const SurveyView: React.FC<SurveyViewProps> = ({ onComplete }) => {
                 </div>
               </CardContent>
 
-              <CardFooter className="p-0 pt-4 border-t border-slate-100 grid grid-cols-2 gap-3">
-                <Button variant="outline" onClick={handlePrevStep} className="w-full text-xs sm:text-sm font-medium flex items-center justify-center gap-1.5 py-2.5">
+              <CardFooter className="p-0 pt-6 border-t border-slate-100 grid grid-cols-2 gap-3.5">
+                <Button variant="outline" onClick={handlePrevStep} className="h-11 sm:h-12 w-full text-xs sm:text-sm font-medium flex items-center justify-center gap-2">
                   <ArrowLeft size={16} />
                   <span>Назад</span>
                 </Button>
-                <Button onClick={handleNextStep} className="w-full text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 py-2.5 bg-orange-600 hover:bg-orange-700">
-                  <span>Бар и напитки</span>
+                <Button onClick={handleNextStep} className="h-11 sm:h-12 w-full text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 bg-orange-600 hover:bg-orange-700 text-white shadow-sm">
+                  <span>Бар и десерты</span>
                   <ArrowRight size={16} />
                 </Button>
               </CardFooter>
@@ -595,23 +751,23 @@ export const SurveyView: React.FC<SurveyViewProps> = ({ onComplete }) => {
             transition={{ duration: 0.18 }}
             className="w-full"
           >
-            <Card className="p-5 sm:p-7 bg-white border border-slate-200/80 shadow-xs flex flex-col gap-6">
-              <CardHeader className="p-0 pb-4 border-b border-slate-100">
-                <CardTitle className="text-xl sm:text-2xl text-slate-900 flex items-center gap-2">
+            <Card className="p-6 sm:p-8 bg-white border border-slate-200/80 shadow-xs flex flex-col gap-7 sm:gap-8">
+              <CardHeader className="p-0 pb-5 border-b border-slate-100 flex flex-col gap-1.5">
+                <CardTitle className="text-xl sm:text-2xl text-slate-900 flex items-center gap-2.5">
                   <span>🍸</span> Барная карта и десерты
                 </CardTitle>
-                <CardDescription className="text-xs sm:text-sm mt-1 text-slate-500">
-                  Финальный штрих для атмосферного вечера:
+                <CardDescription className="text-xs sm:text-sm text-slate-500 leading-relaxed">
+                  Финальный штрих для отличного вечера:
                 </CardDescription>
               </CardHeader>
 
-              <CardContent className="p-0 flex flex-col gap-6">
+              <CardContent className="p-0 flex flex-col gap-7 sm:gap-8">
                 {/* Alcohol Pref Format */}
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-3.5">
                   <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
                     🍾 Твой формат напитков:
                   </h3>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2.5 sm:gap-3">
                     {(['alcohol', 'light', 'non-alc'] as AlcoholPrefType[]).map((pref) => {
                       const isActive = alcoholPref === pref;
                       return renderChip(
@@ -631,12 +787,12 @@ export const SurveyView: React.FC<SurveyViewProps> = ({ onComplete }) => {
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
-                    className="flex flex-col gap-3 bg-slate-50/70 border border-slate-200/80 rounded-2xl p-4"
+                    className="flex flex-col gap-3.5 bg-slate-50/80 border border-slate-200/80 rounded-2xl p-5"
                   >
                     <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                      🍸 Что налить в бокал?
+                      🍸 Что налить в бокал:
                     </h3>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-2.5 sm:gap-3">
                       {(
                         [
                           'prosecco',
@@ -673,11 +829,11 @@ export const SurveyView: React.FC<SurveyViewProps> = ({ onComplete }) => {
                 )}
 
                 {/* Soft Drinks */}
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-3.5">
                   <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
                     🧃 Безалкогольные напитки:
                   </h3>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2.5 sm:gap-3">
                     {(
                       [
                         'cola',
@@ -709,11 +865,11 @@ export const SurveyView: React.FC<SurveyViewProps> = ({ onComplete }) => {
                 </div>
 
                 {/* Desserts */}
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-3.5">
                   <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
                     🍰 Сладкое и десерты:
                   </h3>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2.5 sm:gap-3">
                     {(
                       ['cake', 'icecream', 'fruits', 'cupcakes', 'eclairs', 'none'] as DessertType[]
                     ).map((dst) => {
@@ -730,30 +886,30 @@ export const SurveyView: React.FC<SurveyViewProps> = ({ onComplete }) => {
                 </div>
 
                 {/* Wishes */}
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-2.5">
                   <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
-                    💬 Пожелания имениннику или по заказу:
+                    💬 Пожелания имениннику или комментарий:
                   </label>
                   <Textarea
                     value={wishes}
                     onChange={(e) => setWishes(e.target.value)}
                     placeholder="Любимый соус, трек для плейлиста или просто тёплые слова..."
-                    className="h-20"
+                    className="h-24 p-3.5 text-sm"
                   />
                 </div>
               </CardContent>
 
-              <CardFooter className="p-0 pt-4 border-t border-slate-100 grid grid-cols-2 gap-3">
-                <Button variant="outline" onClick={handlePrevStep} className="w-full text-xs sm:text-sm font-medium flex items-center justify-center gap-1.5 py-2.5">
+              <CardFooter className="p-0 pt-6 border-t border-slate-100 grid grid-cols-2 gap-3.5">
+                <Button variant="outline" onClick={handlePrevStep} className="h-11 sm:h-12 w-full text-xs sm:text-sm font-medium flex items-center justify-center gap-2">
                   <ArrowLeft size={16} />
                   <span>Назад</span>
                 </Button>
                 <Button
                   onClick={handleSubmit}
                   disabled={isSubmitting}
-                  className="w-full text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 py-2.5 bg-orange-600 hover:bg-orange-700 text-white shadow-sm"
+                  className="h-11 sm:h-12 w-full text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 bg-orange-600 hover:bg-orange-700 text-white shadow-sm"
                 >
-                  <Sparkles size={16} className={isSubmitting ? 'animate-spin' : ''} />
+                  <Sparkles size={17} className={isSubmitting ? 'animate-spin' : ''} />
                   <span>{isSubmitting ? 'Сохраняем...' : 'Отправить'}</span>
                 </Button>
               </CardFooter>

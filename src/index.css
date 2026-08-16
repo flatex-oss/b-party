@@ -36,28 +36,26 @@
     --font-heading: 'Unbounded', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
     --font-body: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   }
-}
 
-*, *::before, *::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  -webkit-tap-highlight-color: transparent;
-}
+  *, *::before, *::after {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
 
-html, body {
-  width: 100%;
-  min-height: 100vh;
-  margin: 0;
-  padding: 0;
-  background-color: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-body);
-  line-height: 1.55;
-  letter-spacing: -0.01em;
-  overflow-x: hidden;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  html, body {
+    width: 100%;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-body);
+    line-height: 1.6;
+    letter-spacing: -0.01em;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 }
 
 #root {
@@ -66,13 +64,13 @@ html, body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 1rem 1rem 3rem;
+  padding: 1.25rem 1rem 3.5rem;
   box-sizing: border-box;
 }
 
 @media (min-width: 640px) {
   #root {
-    padding: 1.5rem 1.5rem 4rem;
+    padding: 2.25rem 1.75rem 4.5rem;
   }
 }
 

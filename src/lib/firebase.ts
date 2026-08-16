@@ -110,13 +110,75 @@ export async function testFirestoreConnection(): Promise<boolean> {
   }
 }
 
-export async function loginWithGoogle(): Promise<User> {
-  const result = await signInWithPopup(auth, googleProvider);
-  return result.user;
+export interface UserProfile {
+  uid: string;
+  displayName: string | null;
+  email: string | null;
+  photoURL: string | null;
+  isGuest?: boolean;
+}
+
+const LOCAL_USER_KEY = 'party_app_user_profile';
+
+export function getLocalUserProfile(): UserProfile | null {
+  try {
+    const raw = localStorage.getItem(LOCAL_USER_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {
+    console.warn('Could not load local user profile', e);
+  }
+  return null;
+}
+
+export function saveLocalUserProfile(profile: UserProfile | null): void {
+  try {
+    if (profile) {
+      localStorage.setItem(LOCAL_USER_KEY, JSON.stringify(profile));
+    } else {
+      localStorage.removeItem(LOCAL_USER_KEY);
+    }
+  } catch (e) {
+    console.warn('Could not save local user profile', e);
+  }
+}
+
+export interface LoginResult {
+  user: User | null;
+  isUnauthorizedDomain?: boolean;
+  currentDomain?: string;
+  error?: string;
+}
+
+export async function loginWithGoogle(): Promise<LoginResult> {
+  const currentDomain = typeof window !== 'undefined' ? window.location.hostname : '';
+  try {
+    const result = await signInWithPopup(auth, googleProvider);
+    saveLocalUserProfile(null); // Clear guest profile on real login
+    return { user: result.user };
+  } catch (err: any) {
+    const errorCode = err?.code || '';
+    const errorMsg = err?.message || String(err);
+    const isUnauthorizedDomain =
+      errorCode === 'auth/unauthorized-domain' || errorMsg.includes('auth/unauthorized-domain');
+
+    console.warn('Google login notice:', errorCode, errorMsg);
+
+    return {
+      user: null,
+      isUnauthorizedDomain,
+      currentDomain,
+      error: errorMsg,
+    };
+  }
 }
 
 export async function logoutUser(): Promise<void> {
-  await firebaseSignOut(auth);
+  saveLocalUserProfile(null);
+  try {
+    await firebaseSignOut(auth);
+  } catch (e) {
+    console.warn('Firebase signout note:', e);
+  }
 }
 
 export { onAuthStateChanged };

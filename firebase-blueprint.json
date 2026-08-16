@@ -14,6 +14,15 @@
           "description": "Name or nickname of the party guest",
           "maxLength": 100
         },
+        "foodFormat": {
+          "type": "string",
+          "description": "Preferred food format: restaurant, delivery, or both",
+          "maxLength": 50
+        },
+        "restaurantDishes": {
+          "type": "array",
+          "description": "List of preferred restaurant dishes"
+        },
         "allergies": {
           "type": "array",
           "description": "List of food allergies or dietary restrictions"

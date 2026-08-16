@@ -66,6 +66,24 @@ export const ThankYouView: React.FC<ThankYouViewProps> = ({ response, setActiveT
 
   const tags: string[] = [];
   if (response) {
+    if (response.foodFormat === 'restaurant') {
+      tags.push('👨‍🍳 Домашний ресторан');
+    } else if (response.foodFormat === 'delivery') {
+      tags.push('🍕 Доставка');
+    } else {
+      tags.push('✨ Ресторан + Доставка');
+    }
+
+    if (response.restaurantDishes && response.restaurantDishes.length > 0) {
+      tags.push(
+        '👨‍🍳 ' +
+          response.restaurantDishes
+            .slice(0, 2)
+            .map((d) => LABELS.restaurantDishes[d]?.replace(/\s.*$/, '') || d)
+            .join(' + ')
+      );
+    }
+
     if (response.pizza.length > 0 && !response.pizza.includes('no-pizza')) {
       tags.push(
         '🍕 ' +
@@ -97,51 +115,66 @@ export const ThankYouView: React.FC<ThankYouViewProps> = ({ response, setActiveT
       initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.2 }}
-      className="flex flex-col gap-5 sm:gap-6 w-full pb-6"
+      className="flex flex-col gap-6 sm:gap-8 w-full pb-6"
     >
       {/* Top Badge */}
       <div className="flex justify-center">
-        <Badge variant="default" className="text-xs font-semibold px-3 py-1 bg-orange-50 text-orange-700 border-orange-200">
+        <Badge variant="default" className="text-xs sm:text-sm font-semibold px-4 py-1.5 bg-orange-50 text-orange-700 border-orange-200 shadow-2xs">
           🎮 Твой праздничный паспорт · Valorant
         </Badge>
       </div>
 
       {/* Main Agent Passport Card */}
-      <Card className="relative text-center overflow-hidden bg-white p-6 sm:p-8 border border-slate-200/80 shadow-sm flex flex-col items-center gap-4">
+      <Card className="relative text-center overflow-hidden bg-white p-7 sm:p-10 border border-slate-200/80 shadow-xs flex flex-col items-center gap-5 sm:gap-6 rounded-2xl">
         {/* Passport Stamp Pill */}
-        <div className="absolute top-3.5 right-3.5 bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] sm:text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider flex items-center gap-1 shadow-2xs">
-          <Check size={12} className="stroke-[3]" />
+        <div className="absolute top-4 right-4 sm:top-5 sm:right-5 bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider flex items-center gap-1.5 shadow-2xs">
+          <Check size={14} className="stroke-[3]" />
           <span>Заказ сохранён</span>
         </div>
 
         {/* Guest Name & Greeting */}
-        <div>
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-            Гость: <span className="text-slate-800 font-extrabold">{response?.name || 'Друг'}</span>
+        <div className="pt-2">
+          <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-400">
+            Гость: <span className="text-slate-800 font-extrabold text-sm sm:text-base">{response?.name || 'Друг'}</span>
           </span>
         </div>
 
-        {/* Agent Avatar Frame */}
-        <div className="relative mx-auto w-28 h-28 sm:w-32 sm:h-32 rounded-2xl border-2 border-orange-200 shadow-sm overflow-hidden bg-gradient-to-br from-orange-50 to-amber-100 flex items-center justify-center">
+        {/* Agent Avatar Frame with Vintage CRT/Cartoon Frame */}
+        <div className="relative mx-auto w-full max-w-sm aspect-[4/3] rounded-2xl border-4 border-amber-950/15 shadow-md overflow-hidden bg-gradient-to-br from-amber-50 to-orange-100 flex items-center justify-center group">
           {!imgError ? (
             <img
               src={agent.img}
               alt={agent.name}
               referrerPolicy="no-referrer"
-              onError={() => setImgError(true)}
-              className="w-full h-full object-cover scale-105"
+              onError={() => {
+                // Try fallback to .png if .jpg failed, otherwise show styled fallback
+                if (agent.img.endsWith('.jpg')) {
+                  const fallbackPng = agent.img.replace('.jpg', '.png');
+                  const target = new Image();
+                  target.onload = () => {
+                    agent.img = fallbackPng;
+                    setImgError(false);
+                  };
+                  target.onerror = () => setImgError(true);
+                  target.src = fallbackPng;
+                } else {
+                  setImgError(true);
+                }
+              }}
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-102"
             />
           ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center p-2 bg-orange-50 text-orange-700">
-              <span className="text-3xl mb-1">🎮</span>
-              <span className="font-heading text-xs font-bold uppercase">{agent.name}</span>
+            <div className="w-full h-full flex flex-col items-center justify-center p-4 bg-gradient-to-br from-amber-50 to-orange-100 text-orange-800">
+              <span className="text-5xl mb-2">🎬</span>
+              <span className="font-heading text-base font-extrabold uppercase tracking-wide">{agent.name}</span>
+              <span className="text-xs text-amber-700 mt-1 font-medium">{agent.title}</span>
             </div>
           )}
         </div>
 
         {/* Agent Name & Title */}
-        <div className="flex flex-col gap-0.5">
-          <h2 className="font-heading text-2xl sm:text-3xl font-extrabold text-slate-900">
+        <div className="flex flex-col gap-1">
+          <h2 className="font-heading text-2xl sm:text-4xl font-extrabold text-slate-900">
             {agent.name}
           </h2>
           <span className="text-xs sm:text-sm font-semibold text-orange-600">
@@ -150,18 +183,18 @@ export const ThankYouView: React.FC<ThankYouViewProps> = ({ response, setActiveT
         </div>
 
         {/* Agent Quote */}
-        <div className="relative text-xs sm:text-sm text-slate-600 bg-slate-50 border border-slate-200/80 rounded-xl py-3 px-4 max-w-md italic flex items-center gap-2">
-          <Quote size={16} className="text-slate-400 shrink-0 self-start mt-0.5" />
+        <div className="relative text-xs sm:text-sm text-slate-600 bg-slate-50/80 border border-slate-200/80 rounded-2xl py-3.5 px-5 max-w-lg italic flex items-start gap-2.5 leading-relaxed text-left">
+          <Quote size={18} className="text-slate-400 shrink-0 mt-0.5" />
           <span>"{agent.quote}"</span>
         </div>
 
         {/* Guest Order Highlights Chips */}
         {tags.length > 0 && (
-          <div className="flex flex-wrap justify-center gap-1.5 max-w-md pt-1">
+          <div className="flex flex-wrap justify-center gap-2 max-w-md pt-1">
             {tags.map((t, idx) => (
               <span
                 key={idx}
-                className="bg-slate-50 border border-slate-200 text-slate-700 text-xs font-medium px-2.5 py-1 rounded-lg"
+                className="bg-slate-50 border border-slate-200/80 text-slate-700 text-xs sm:text-sm font-medium px-3 py-1.5 rounded-xl shadow-2xs"
               >
                 {t}
               </span>
@@ -170,44 +203,44 @@ export const ThankYouView: React.FC<ThankYouViewProps> = ({ response, setActiveT
         )}
 
         {/* Share Button */}
-        <div className="w-full max-w-xs pt-2">
+        <div className="w-full max-w-xs pt-3">
           <Button
             size="lg"
             onClick={handleShare}
-            className="w-full text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 py-3 bg-orange-600 hover:bg-orange-700 text-white shadow-sm"
+            className="w-full text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 h-12 bg-orange-600 hover:bg-orange-700 text-white shadow-sm"
           >
-            {copied ? <Check size={16} /> : <Share2 size={16} />}
+            {copied ? <Check size={17} /> : <Share2 size={17} />}
             <span>{copied ? 'Скопировано в буфер!' : 'Поделиться паспортом'}</span>
           </Button>
         </div>
       </Card>
 
       {/* Navigation Buttons Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 w-full">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 w-full">
         <Button
           variant="outline"
           onClick={() => setActiveTab('analytics')}
-          className="text-xs sm:text-sm font-medium flex items-center justify-center gap-1.5 py-2.5"
+          className="text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 h-11"
         >
-          <PieChart size={15} />
+          <PieChart size={16} />
           <span>Смотреть сводку</span>
         </Button>
 
         <Button
           variant="secondary"
           onClick={() => setActiveTab('calculator')}
-          className="text-xs sm:text-sm font-medium flex items-center justify-center gap-1.5 py-2.5"
+          className="text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 h-11"
         >
-          <Calculator size={15} />
+          <Calculator size={16} />
           <span>Калькулятор</span>
         </Button>
 
         <Button
           variant="outline"
           onClick={onFillAgain}
-          className="text-xs sm:text-sm font-medium flex items-center justify-center gap-1.5 py-2.5"
+          className="text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 h-11"
         >
-          <UserPlus size={15} />
+          <UserPlus size={16} />
           <span>Заполнить за друга</span>
         </Button>
       </div>

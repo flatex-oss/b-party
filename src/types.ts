@@ -1,3 +1,14 @@
+export type FoodFormatType = 'restaurant' | 'delivery' | 'both';
+
+export type RestaurantDishType =
+  | 'steak-meat'
+  | 'pasta-risotto'
+  | 'bruschetta-tapas'
+  | 'gourmet-salads'
+  | 'baked-fish'
+  | 'truffle-dishes'
+  | 'baked-veggies';
+
 export type AllergyType =
   | 'none'
   | 'nuts'
@@ -88,6 +99,8 @@ export type DessertType =
 export interface SurveyResponse {
   id: string;
   name: string;
+  foodFormat: FoodFormatType;
+  restaurantDishes?: RestaurantDishType[];
   allergies: AllergyType[];
   pizza: PizzaType[];
   sushi: SushiType[];

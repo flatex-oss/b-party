@@ -19,7 +19,7 @@ const RESPONSES_COLLECTION = 'responses';
 export function getLocalResponses(): SurveyResponse[] {
   try {
     const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (raw) {
+    if (raw !== null) {
       return JSON.parse(raw);
     }
   } catch (e) {
@@ -121,6 +121,8 @@ export async function saveResponse(response: SurveyResponse): Promise<SurveyResp
   const sanitizedData: SurveyResponse = {
     id: sanitizedId,
     name: response.name.slice(0, 100),
+    foodFormat: response.foodFormat || 'both',
+    restaurantDishes: response.restaurantDishes || [],
     allergies: response.allergies || ['none'],
     pizza: response.pizza || [],
     sushi: response.sushi || [],

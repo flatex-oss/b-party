@@ -1,8 +1,10 @@
-import { SurveyResponse } from '../types';
+import { SurveyResponse, RestaurantDishType, FoodFormatType } from '../types';
 import { LABELS, SPICE_LEVELS } from '../data/surveyData';
 
 export interface PartyOrderEstimate {
   totalGuests: number;
+  foodFormatBreakdown: { name: string; count: number; percent: number }[];
+  restaurantBreakdown: { name: string; count: number; percent: number }[];
   pizzaCount: number;
   sushiPieces: number;
   sushiSets: number;
@@ -27,6 +29,8 @@ export function calculatePartyEstimate(responses: SurveyResponse[]): PartyOrderE
   if (total === 0) {
     return {
       totalGuests: 0,
+      foodFormatBreakdown: [],
+      restaurantBreakdown: [],
       pizzaCount: 0,
       sushiPieces: 0,
       sushiSets: 0,
@@ -46,6 +50,33 @@ export function calculatePartyEstimate(responses: SurveyResponse[]): PartyOrderE
       averageSpice: 2,
     };
   }
+
+  // Food format breakdown
+  const formatCounts: Record<string, number> = {};
+  responses.forEach((r) => {
+    const fmt = r.foodFormat || 'both';
+    formatCounts[fmt] = (formatCounts[fmt] || 0) + 1;
+  });
+  const foodFormatBreakdown = Object.entries(formatCounts).map(([fmt, count]) => ({
+    name: LABELS.foodFormat[fmt as FoodFormatType] || fmt,
+    count,
+    percent: Math.round((count / total) * 100),
+  })).sort((a, b) => b.count - a.count);
+
+  // Restaurant dishes breakdown
+  const restCounts: Record<string, number> = {};
+  responses.forEach((r) => {
+    if (r.restaurantDishes && Array.isArray(r.restaurantDishes)) {
+      r.restaurantDishes.forEach((d) => {
+        restCounts[d] = (restCounts[d] || 0) + 1;
+      });
+    }
+  });
+  const restaurantBreakdown = Object.entries(restCounts).map(([d, count]) => ({
+    name: LABELS.restaurantDishes[d as RestaurantDishType] || d,
+    count,
+    percent: Math.round((count / total) * 100),
+  })).sort((a, b) => b.count - a.count);
 
   // Count pizza eaters
   const pizzaEaters = responses.filter((r) => !r.pizza.includes('no-pizza') && r.pizza.length > 0).length;
@@ -152,6 +183,8 @@ export function calculatePartyEstimate(responses: SurveyResponse[]): PartyOrderE
 
   return {
     totalGuests: total,
+    foodFormatBreakdown,
+    restaurantBreakdown,
     pizzaCount,
     sushiPieces,
     sushiSets,
@@ -178,6 +211,22 @@ export function generateTelegramSummary(estimate: PartyOrderEstimate, responses:
   lines.push('🎉 🎂 ИТОГОВЫЙ ЗАКАЗ НА ДЕНЬ РОЖДЕНИЯ 🎂 🎉');
   lines.push(`👥 Всего ответов от гостей: ${estimate.totalGuests}`);
   lines.push('');
+
+  if (estimate.foodFormatBreakdown.length > 0) {
+    lines.push('🍽️ ФОРМАТ СТОЛА:');
+    estimate.foodFormatBreakdown.forEach((f) => {
+      lines.push(`• ${f.name} — ${f.count} чел. (${f.percent}%)`);
+    });
+    lines.push('');
+  }
+
+  if (estimate.restaurantBreakdown.length > 0) {
+    lines.push('👨‍🍳 РЕСТОРАННЫЕ ДОМАШНИЕ БЛЮДА (ТОП ВЫБОРА):');
+    estimate.restaurantBreakdown.slice(0, 4).forEach((d) => {
+      lines.push(`• ${d.name} — ${d.count} голосов (${d.percent}%)`);
+    });
+    lines.push('');
+  }
 
   lines.push('🍕 ПИЦЦА (рекомендовано ' + estimate.pizzaCount + ' шт.):');
   if (estimate.pizzaBreakdown.length > 0) {
